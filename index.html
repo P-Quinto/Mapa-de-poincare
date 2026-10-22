@@ -34,7 +34,10 @@
             gap: 20px;
             max-width: 1400px;
             margin: 0 auto 50px auto;
+            align-items: flex-start; /* Necesario para que sticky funcione bien */
         }
+        
+        /* --- LA MAGIA DEL STICKY --- */
         .controls {
             flex: 1;
             min-width: 320px;
@@ -42,8 +45,21 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            height: fit-content;
+            
+            /* Esto hace que los sliders te sigan al scrollear */
+            position: sticky;
+            top: 20px; 
+            /* Le damos una altura máxima y barra de scroll por si la pantalla es chica */
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
         }
+
+        /* Personalizamos la barra de scroll del panel para que se vea linda */
+        .controls::-webkit-scrollbar { width: 8px; }
+        .controls::-webkit-scrollbar-track { background: #1a252f; border-radius: 4px; }
+        .controls::-webkit-scrollbar-thumb { background: #34495e; border-radius: 4px; }
+        .controls::-webkit-scrollbar-thumb:hover { background: #4a6278; }
+
         .plots {
             flex: 3;
             min-width: 600px;
@@ -99,7 +115,7 @@
     <p class="subtitle">Análisis del Mapa de Poincaré y Diagrama de Telaraña (Cobweb)</p>
 
     <div class="container">
-        <!-- Panel de Controles -->
+        <!-- Panel de Controles (Ahora Sticky) -->
         <div class="controls">
             <div class="control-group">
                 <label><span>\(\delta\) (Disipación)</span> <input type="number" id="num-delta" min="0.001" max="1.0" step="0.001" value="0.200"></label>
@@ -132,11 +148,8 @@
 
         <!-- Panel de Gráficos -->
         <div class="plots">
-            <!-- Gráfico 1: Espacio de Fases -->
             <div id="phasePlot" class="plot-box"></div>
-            <!-- Gráfico 2: Serie Temporal -->
             <div id="timePlot" class="plot-box"></div>
-            <!-- Gráfico 3: Cobweb del Mapa de Poincaré -->
             <div id="cobwebPlot" class="plot-box"></div>
         </div>
     </div>
@@ -223,7 +236,6 @@
             let den = Math.pow(w0*w0 - w*w, 2) + Math.pow(delta * w, 2);
             let A = (w0*w0 - w*w) / den;
             let B = (delta * w) / den;
-            let fixed_x = A;
 
             // 3. GRAFICAR ESPACIO DE FASES
             let tracePhaseLine = { x: phase_x, y: phase_v, mode: 'lines', name: 'Trayectoria continua', line: {color: 'rgba(52, 152, 219, 0.4)', width: 1.5} };
@@ -238,18 +250,26 @@
             };
             Plotly.react('phasePlot', [tracePhaseLine, tracePoincare, traceFixed], layoutPhase, {responsive: true});
 
-            // 4. GRAFICAR SERIE TEMPORAL
-            let traceTimeLine = { x: time_t, y: time_x, mode: 'lines', name: 'x(t)', line: {color: 'rgba(52, 152, 219, 0.8)', width: 2} };
-            let traceTimePoincare = { x: poincare_t, y: poincare_x, mode: 'markers', name: 'Destellos', marker: {color: '#e74c3c', size: 8} };
+            // 4. GRAFICAR SERIE TEMPORAL (Colores más oscuros y visibles)
+            let traceTimeLine = { 
+                x: time_t, y: time_x, mode: 'lines', name: 'x(t)', 
+                line: {color: '#2980b9', width: 2.5} // Azul más oscuro y grueso
+            };
+            let traceTimePoincare = { 
+                x: poincare_t, y: poincare_x, mode: 'markers', name: 'Destellos', 
+                marker: {color: '#c0392b', size: 9} // Rojo más oscuro
+            };
             
-            // Líneas verticales suaves (Naranja clarito)
+            // Líneas verticales naranjas más visibles
             let shapes = [];
+            let min_y = Math.min(...time_x);
+            let max_y = Math.max(...time_x);
             for (let i = 0; i < poincare_t.length; i++) {
                 shapes.push({
                     type: 'line',
-                    x0: poincare_t[i], y0: Math.min(...time_x),
-                    x1: poincare_t[i], y1: Math.max(...time_x),
-                    line: { color: 'rgba(255, 165, 0, 0.3)', width: 1, dash: 'solid' }
+                    x0: poincare_t[i], y0: min_y,
+                    x1: poincare_t[i], y1: max_y,
+                    line: { color: 'rgba(230, 126, 34, 0.7)', width: 1.5, dash: 'solid' } // Naranja oscuro
                 });
             }
 
@@ -262,35 +282,26 @@
             Plotly.react('timePlot', [traceTimeLine, traceTimePoincare], layoutTime, {responsive: true});
 
             // 5. GRAFICAR DIAGRAMA DE TELARAÑA (COBWEB)
-            // Para esto, graficamos x_{n+1} en el eje Y, y x_n en el eje X.
-            
-            // Generamos la secuencia de la telaraña (solo usando el eje x)
             let cobwebX = [poincare_x[0]];
             let cobwebY = [0]; 
             
             for (let i = 0; i < poincare_x.length - 1; i++) {
                 let x_n = poincare_x[i];
                 let x_next = poincare_x[i+1];
-                // Línea vertical de (x_n, x_n) a (x_n, x_next)
                 cobwebX.push(x_n); cobwebY.push(x_next);
-                // Línea horizontal de (x_n, x_next) a (x_next, x_next)
                 cobwebX.push(x_next); cobwebY.push(x_next);
             }
 
-            // Determinamos los límites de los ejes basados en los datos
             let minX = Math.min(...poincare_x) - 0.5;
             let maxX = Math.max(...poincare_x) + 0.5;
             let absMax = Math.max(Math.abs(minX), Math.abs(maxX));
-            // Hacemos que el gráfico sea cuadrado y centrado
             let axisRange = [-absMax, absMax];
 
             let traceDiag = { x: axisRange, y: axisRange, mode: 'lines', name: 'y = x', line: {color: '#7f8c8d', width: 2, dash: 'dash'} };
             let traceCobweb = { x: cobwebX, y: cobwebY, mode: 'lines+markers', name: 'Telaraña', line: {color: '#e74c3c', width: 1.5}, marker: {color: '#e74c3c', size: 5} };
             
-            // Unimos los puntos discretos de x_n vs x_{n+1} para ver la "curva" del mapa
             let traceMapPoints = { 
-                x: poincare_x.slice(0, -1), 
-                y: poincare_x.slice(1), 
+                x: poincare_x.slice(0, -1), y: poincare_x.slice(1), 
                 mode: 'markers', name: 'Dispersión (x_n vs x_{n+1})', 
                 marker: {color: '#3498db', size: 6, symbol: 'circle-open'} 
             };
