@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualizadores de Dinámica No Lineal</title>
+    <title>Visualizador del Mapa de Poincaré y Cobweb</title>
     
     <!-- MathJax para el LaTeX -->
     <script>
@@ -22,12 +22,11 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 20px;
-            /* Fondo oscuro para que los gráficos blancos resalten */
-            background-color: #1e2229; 
+            background-color: #1e2229; /* Fondo oscuro */
             color: #ecf0f1;
         }
-        h1, h2 { text-align: center; color: #ecf0f1; }
-        h2 { margin-top: 40px; border-bottom: 1px solid #34495e; padding-bottom: 10px; }
+        h1 { text-align: center; color: #ecf0f1; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #bdc3c7; margin-bottom: 30px; }
         
         .container {
             display: flex;
@@ -43,6 +42,7 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            height: fit-content;
         }
         .plots {
             flex: 3;
@@ -52,7 +52,7 @@
             gap: 20px;
         }
         .plot-box {
-            background: white;
+            background: white; /* Fondo blanco para los gráficos */
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.5);
             height: 400px;
@@ -91,144 +91,72 @@
             border-radius: 8px;
             line-height: 1.5;
         }
-        /* Botón para cambiar de vista */
-        .btn-toggle {
-            padding: 10px 20px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            margin-bottom: 20px;
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .btn-toggle:hover { background-color: #2980b9; }
-        
-        /* Clase para ocultar secciones */
-        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <!-- BOTONES DE NAVEGACIÓN -->
-    <div style="text-align: center; margin-bottom: 30px;">
-        <button class="btn-toggle" onclick="switchView('oscillator')">🔵 Oscilador Forzado (Poincaré)</button>
-        <button class="btn-toggle" onclick="switchView('logistic')">🟢 Mapa Logístico (Telaraña)</button>
-    </div>
+    <h1>Visualizador Dinámico: Oscilador Forzado</h1>
+    <p class="subtitle">Análisis del Mapa de Poincaré y Diagrama de Telaraña (Cobweb)</p>
 
-    <!-- ========================================== -->
-    <!-- VISTA 1: OSCILADOR FORZADO Y POINCARÉ      -->
-    <!-- ========================================== -->
-    <div id="view-oscillator">
-        <h1>Visualizador del Mapa de Poincaré</h1>
-        <p style="text-align: center; color: #bdc3c7;">Oscilador armónico forzado y amortiguado: \(\ddot{x} + \delta\dot{x} + \omega_0^2 x = \cos(\omega t)\)</p>
-
-        <div class="container">
-            <div class="controls">
-                <div class="control-group">
-                    <label><span>\(\delta\) (Disipación)</span> <input type="number" id="num-delta" min="0.001" max="1.0" step="0.001" value="0.200"></label>
-                    <input type="range" id="delta" min="0.001" max="1.0" step="0.001" value="0.200">
-                </div>
-                <div class="control-group">
-                    <label><span>\(\omega_0\) (Frec. Natural)</span> <input type="number" id="num-w0" min="0.500" max="2.000" step="0.001" value="1.000"></label>
-                    <input type="range" id="w0" min="0.500" max="2.000" step="0.001" value="1.000">
-                </div>
-                <div class="control-group">
-                    <label><span>\(\omega\) (Frec. Forzada)</span> <input type="number" id="num-w" min="0.100" max="2.500" step="0.001" value="1.000"></label>
-                    <input type="range" id="w" min="0.100" max="2.500" step="0.001" value="1.000">
-                </div>
-                <div class="control-group">
-                    <label><span>\(x_0\) (Pos. Inicial)</span> <input type="number" id="num-x0" min="-5.0" max="5.0" step="0.1" value="3.0"></label>
-                    <input type="range" id="x0" min="-5.0" max="5.0" step="0.1" value="3.0">
-                </div>
-                <div class="control-group">
-                    <label><span>\(v_0\) (Vel. Inicial)</span> <input type="number" id="num-v0" min="-5.0" max="5.0" step="0.1" value="0.0"></label>
-                    <input type="range" id="v0" min="-5.0" max="5.0" step="0.1" value="0.0">
-                </div>
-                <div class="info">
-                    <strong>Para clase:</strong><br>
-                    1. Mové las condiciones iniciales. Los puntos rojos (Mapa de Poincaré) siempre caen en la estrella verde (Punto Fijo).<br><br>
-                    2. Probá resonancia: Poné \(\delta = 0.500\), \(\omega_0 = 1.000\), y \(\omega = 0.968\). Los puntos rojos dejarán de girar en espiral y caerán en línea recta.
-                </div>
+    <div class="container">
+        <!-- Panel de Controles -->
+        <div class="controls">
+            <div class="control-group">
+                <label><span>\(\delta\) (Disipación)</span> <input type="number" id="num-delta" min="0.001" max="1.0" step="0.001" value="0.200"></label>
+                <input type="range" id="delta" min="0.001" max="1.0" step="0.001" value="0.200">
+            </div>
+            <div class="control-group">
+                <label><span>\(\omega_0\) (Frec. Natural)</span> <input type="number" id="num-w0" min="0.500" max="2.000" step="0.001" value="1.000"></label>
+                <input type="range" id="w0" min="0.500" max="2.000" step="0.001" value="1.000">
+            </div>
+            <div class="control-group">
+                <label><span>\(\omega\) (Frec. Forzada)</span> <input type="number" id="num-w" min="0.100" max="2.500" step="0.001" value="1.000"></label>
+                <input type="range" id="w" min="0.100" max="2.500" step="0.001" value="1.000">
+            </div>
+            <div class="control-group">
+                <label><span>\(x_0\) (Pos. Inicial)</span> <input type="number" id="num-x0" min="-5.0" max="5.0" step="0.1" value="3.0"></label>
+                <input type="range" id="x0" min="-5.0" max="5.0" step="0.1" value="3.0">
+            </div>
+            <div class="control-group">
+                <label><span>\(v_0\) (Vel. Inicial)</span> <input type="number" id="num-v0" min="-5.0" max="5.0" step="0.1" value="0.0"></label>
+                <input type="range" id="v0" min="-5.0" max="5.0" step="0.1" value="0.0">
             </div>
 
-            <div class="plots">
-                <div id="phasePlot" class="plot-box"></div>
-                <div id="timePlot" class="plot-box"></div>
+            <div class="info">
+                <strong>Guía para la clase:</strong><br>
+                1. <b>Espacio de Fases:</b> Muestra el flujo continuo y los "destellos" (Mapa de Poincaré).<br><br>
+                2. <b>Serie Temporal:</b> Las líneas verticales naranjas marcan cuándo el estroboscopio toma la muestra.<br><br>
+                3. <b>Diagrama de Telaraña:</b> Proyecta el mapa sobre el eje \(x\). Las líneas rojas muestran cómo el sistema "salta" de un \(x_n\) al siguiente \(x_{n+1}\), convergiendo a la intersección con la diagonal (\(y=x\)).
             </div>
         </div>
-    </div>
 
-    <!-- ========================================== -->
-    <!-- VISTA 2: MAPA LOGÍSTICO Y TELARAÑA         -->
-    <!-- ========================================== -->
-    <div id="view-logistic" class="hidden">
-        <h1>Visualizador del Mapa Logístico (Diagrama de Telaraña)</h1>
-        <p style="text-align: center; color: #bdc3c7;">Ecuación en diferencias: \(x_{n+1} = r x_n (1 - x_n)\)</p>
-
-        <div class="container">
-            <div class="controls">
-                <div class="control-group">
-                    <label><span>\(r\) (Tasa de crecimiento)</span> <input type="number" id="num-r" min="0.1" max="4.0" step="0.01" value="2.8"></label>
-                    <input type="range" id="r" min="0.1" max="4.0" step="0.01" value="2.8">
-                </div>
-                <div class="control-group">
-                    <label><span>\(x_0\) (Condición inicial)</span> <input type="number" id="num-x0-log" min="0.01" max="0.99" step="0.01" value="0.2"></label>
-                    <input type="range" id="x0-log" min="0.01" max="0.99" step="0.01" value="0.2">
-                </div>
-                <div class="control-group">
-                    <label><span>Iteraciones</span> <input type="number" id="num-iter" min="1" max="100" step="1" value="30"></label>
-                    <input type="range" id="iter" min="1" max="100" step="1" value="30">
-                </div>
-                <div class="info">
-                    <strong>Para clase:</strong><br>
-                    1. Observá cómo el "telaraña" (líneas que van y vienen) converge al punto de intersección entre la parábola y la diagonal. Ese es el punto fijo.<br><br>
-                    2. Cambiá \(r\) a \(3.2\) para ver un ciclo de período 2, o a \(3.9\) para ver el comportamiento caótico.
-                </div>
-            </div>
-
-            <div class="plots">
-                <div id="cobwebPlot" class="plot-box" style="height: 600px;"></div>
-            </div>
+        <!-- Panel de Gráficos -->
+        <div class="plots">
+            <!-- Gráfico 1: Espacio de Fases -->
+            <div id="phasePlot" class="plot-box"></div>
+            <!-- Gráfico 2: Serie Temporal -->
+            <div id="timePlot" class="plot-box"></div>
+            <!-- Gráfico 3: Cobweb del Mapa de Poincaré -->
+            <div id="cobwebPlot" class="plot-box"></div>
         </div>
     </div>
 
     <script>
-        // ==========================================
-        // LÓGICA GENERAL DE INTERFAZ Y DEBOUNCE
-        // ==========================================
-        function switchView(viewName) {
-            document.getElementById('view-oscillator').classList.add('hidden');
-            document.getElementById('view-logistic').classList.add('hidden');
-            document.getElementById('view-' + viewName).classList.remove('hidden');
-            
-            // Redibujar al cambiar de pestaña para evitar problemas de tamaño
-            if (viewName === 'oscillator') simulateOscillator();
-            if (viewName === 'logistic') simulateLogistic();
-        }
-
+        // --- Sincronización de Inputs ---
         let timeoutId = null;
-        function triggerOscillator() {
+        function triggerSimulation() {
             if (timeoutId) clearTimeout(timeoutId);
-            timeoutId = setTimeout(simulateOscillator, 50);
-        }
-        let timeoutLogisticId = null;
-        function triggerLogistic() {
-            if (timeoutLogisticId) clearTimeout(timeoutLogisticId);
-            timeoutLogisticId = setTimeout(simulateLogistic, 50);
+            timeoutId = setTimeout(simulate, 50); 
         }
 
-        // Sincronización de inputs (Slider y Número)
-        function setupInputSync(id, callback) {
+        const params = ['delta', 'w0', 'w', 'x0', 'v0'];
+        params.forEach(id => {
             const slider = document.getElementById(id);
             const numInput = document.getElementById('num-' + id);
             
             slider.addEventListener('input', function(e) {
                 numInput.value = parseFloat(e.target.value).toFixed(3);
-                if (callback) callback();
+                triggerSimulation();
             });
             numInput.addEventListener('input', function(e) {
                 let val = parseFloat(e.target.value);
@@ -238,29 +166,19 @@
                 if (val < min) val = min;
                 if (val > max) val = max;
                 slider.value = val;
-                if (callback) callback();
+                triggerSimulation();
             });
             numInput.addEventListener('change', function(e) {
                 let val = parseFloat(e.target.value);
-                const min = parseFloat(slider.min);
-                const max = parseFloat(slider.max);
                 if (isNaN(val)) val = parseFloat(slider.value);
-                if (val < min) val = min;
-                if (val > max) val = max;
                 numInput.value = val.toFixed(3);
                 slider.value = val;
-                if (callback) callback();
+                triggerSimulation();
             });
-        }
+        });
 
-        // ==========================================
-        // LÓGICA: VISUALIZADOR DEL OSCILADOR
-        // ==========================================
-        ['delta', 'w0', 'w', 'x0', 'v0'].forEach(id => setupInputSync(id, triggerOscillator));
-
-        function simulateOscillator() {
-            if (document.getElementById('view-oscillator').classList.contains('hidden')) return;
-
+        // --- Simulación Principal ---
+        function simulate() {
             const delta = parseFloat(document.getElementById('delta').value);
             const w0 = parseFloat(document.getElementById('w0').value);
             const w = parseFloat(document.getElementById('w').value);
@@ -273,12 +191,15 @@
             const steps = Math.floor(t_max / dt);
 
             let x = x0, v = v0, t = 0;
+            
             let phase_x = [], phase_v = [], time_t = [], time_x = [];
             let poincare_x = [], poincare_v = [], poincare_t = [];
+
             let next_poincare_t = 0;
             
             function deriv(t, x, v) { return [v, -w0*w0*x - delta*v + Math.cos(w*t)]; }
 
+            // 1. INTEGRACIÓN (RK4)
             for (let i = 0; i <= steps; i++) {
                 phase_x.push(x); phase_v.push(v);
                 time_t.push(t); time_x.push(x);
@@ -298,11 +219,13 @@
                 t += dt;
             }
 
+            // 2. PUNTO FIJO TEÓRICO
             let den = Math.pow(w0*w0 - w*w, 2) + Math.pow(delta * w, 2);
             let A = (w0*w0 - w*w) / den;
             let B = (delta * w) / den;
+            let fixed_x = A;
 
-            // Gráfico de Fases
+            // 3. GRAFICAR ESPACIO DE FASES
             let tracePhaseLine = { x: phase_x, y: phase_v, mode: 'lines', name: 'Trayectoria continua', line: {color: 'rgba(52, 152, 219, 0.4)', width: 1.5} };
             let tracePoincare = { x: poincare_x, y: poincare_v, mode: 'markers+lines', name: 'Mapa de Poincaré', line: {color: 'rgba(231, 76, 60, 0.5)', width: 1, dash: 'dot'}, marker: {color: '#e74c3c', size: 8} };
             let traceFixed = { x: [A], y: [B * w], mode: 'markers', name: 'Punto Fijo', marker: {color: '#2ecc71', size: 15, symbol: 'star'} };
@@ -311,11 +234,11 @@
                 title: 'Espacio de Fases',
                 xaxis: { title: 'Posición \(x\)', zeroline: true, zerolinecolor: '#ccc' },
                 yaxis: { title: 'Velocidad \(v\)', zeroline: true, zerolinecolor: '#ccc' },
-                margin: { l: 60, r: 30, t: 40, b: 50 }, hovermode: 'closest', showlegend: true
+                margin: { l: 60, r: 30, t: 40, b: 50 }, showlegend: true
             };
             Plotly.react('phasePlot', [tracePhaseLine, tracePoincare, traceFixed], layoutPhase, {responsive: true});
 
-            // Gráfico Temporal con Líneas Verticales Naranjas
+            // 4. GRAFICAR SERIE TEMPORAL
             let traceTimeLine = { x: time_t, y: time_x, mode: 'lines', name: 'x(t)', line: {color: 'rgba(52, 152, 219, 0.8)', width: 2} };
             let traceTimePoincare = { x: poincare_t, y: poincare_x, mode: 'markers', name: 'Destellos', marker: {color: '#e74c3c', size: 8} };
             
@@ -326,7 +249,7 @@
                     type: 'line',
                     x0: poincare_t[i], y0: Math.min(...time_x),
                     x1: poincare_t[i], y1: Math.max(...time_x),
-                    line: { color: 'rgba(255, 165, 0, 0.3)', width: 1, dash: 'solid' } // Naranja suave
+                    line: { color: 'rgba(255, 165, 0, 0.3)', width: 1, dash: 'solid' }
                 });
             }
 
@@ -334,83 +257,58 @@
                 title: 'Evolución Temporal \(x(t)\)',
                 xaxis: { title: 'Tiempo \(t\)' },
                 yaxis: { title: 'Posición \(x\)', zeroline: true, zerolinecolor: '#ccc' },
-                margin: { l: 60, r: 30, t: 40, b: 50 }, showlegend: true,
-                shapes: shapes // Agregamos las líneas verticales
+                margin: { l: 60, r: 30, t: 40, b: 50 }, showlegend: true, shapes: shapes
             };
             Plotly.react('timePlot', [traceTimeLine, traceTimePoincare], layoutTime, {responsive: true});
 
-            if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise().catch(err => console.log(err.message));
-        }
-
-        // ==========================================
-        // LÓGICA: VISUALIZADOR DEL MAPA LOGÍSTICO
-        // ==========================================
-        ['r', 'x0-log', 'iter'].forEach(id => setupInputSync(id, triggerLogistic));
-
-        function simulateLogistic() {
-            if (document.getElementById('view-logistic').classList.contains('hidden')) return;
-
-            const r = parseFloat(document.getElementById('r').value);
-            const x0 = parseFloat(document.getElementById('x0-log').value);
-            const n_iter = parseInt(document.getElementById('iter').value);
-
-            // 1. Generar la curva de la parábola f(x) = r * x * (1 - x)
-            let curveX = [], curveY = [];
-            for (let i = 0; i <= 100; i++) {
-                let x_val = i / 100;
-                curveX.push(x_val);
-                curveY.push(r * x_val * (1 - x_val));
+            // 5. GRAFICAR DIAGRAMA DE TELARAÑA (COBWEB)
+            // Para esto, graficamos x_{n+1} en el eje Y, y x_n en el eje X.
+            
+            // Generamos la secuencia de la telaraña (solo usando el eje x)
+            let cobwebX = [poincare_x[0]];
+            let cobwebY = [0]; 
+            
+            for (let i = 0; i < poincare_x.length - 1; i++) {
+                let x_n = poincare_x[i];
+                let x_next = poincare_x[i+1];
+                // Línea vertical de (x_n, x_n) a (x_n, x_next)
+                cobwebX.push(x_n); cobwebY.push(x_next);
+                // Línea horizontal de (x_n, x_next) a (x_next, x_next)
+                cobwebX.push(x_next); cobwebY.push(x_next);
             }
 
-            // 2. Generar la diagonal y = x
-            let diagX = [0, 1];
-            let diagY = [0, 1];
+            // Determinamos los límites de los ejes basados en los datos
+            let minX = Math.min(...poincare_x) - 0.5;
+            let maxX = Math.max(...poincare_x) + 0.5;
+            let absMax = Math.max(Math.abs(minX), Math.abs(maxX));
+            // Hacemos que el gráfico sea cuadrado y centrado
+            let axisRange = [-absMax, absMax];
 
-            // 3. Generar la trayectoria de la telaraña (Cobweb)
-            let cobwebX = [x0];
-            let cobwebY = [0]; // Empezamos desde el eje x
+            let traceDiag = { x: axisRange, y: axisRange, mode: 'lines', name: 'y = x', line: {color: '#7f8c8d', width: 2, dash: 'dash'} };
+            let traceCobweb = { x: cobwebX, y: cobwebY, mode: 'lines+markers', name: 'Telaraña', line: {color: '#e74c3c', width: 1.5}, marker: {color: '#e74c3c', size: 5} };
             
-            let current_x = x0;
-            for (let i = 0; i < n_iter; i++) {
-                let next_x = r * current_x * (1 - current_x);
-                // Línea vertical: de (x, x) a (x, f(x))
-                cobwebX.push(current_x); cobwebY.push(next_x);
-                // Línea horizontal: de (x, f(x)) a (f(x), f(x))
-                cobwebX.push(next_x); cobwebY.push(next_x);
-                current_x = next_x;
-            }
-
-            // Trazas de Plotly
-            let traceCurve = { x: curveX, y: curveY, mode: 'lines', name: 'f(x) = r x (1-x)', line: {color: '#3498db', width: 2} };
-            let traceDiag = { x: diagX, y: diagY, mode: 'lines', name: 'y = x', line: {color: '#7f8c8d', width: 1, dash: 'dash'} };
-            
-            // La telaraña
-            let traceCobweb = { 
-                x: cobwebX, y: cobwebY, mode: 'lines+markers', name: 'Telaraña', 
-                line: {color: '#e74c3c', width: 1.5}, 
-                marker: {color: '#e74c3c', size: 4} 
+            // Unimos los puntos discretos de x_n vs x_{n+1} para ver la "curva" del mapa
+            let traceMapPoints = { 
+                x: poincare_x.slice(0, -1), 
+                y: poincare_x.slice(1), 
+                mode: 'markers', name: 'Dispersión (x_n vs x_{n+1})', 
+                marker: {color: '#3498db', size: 6, symbol: 'circle-open'} 
             };
 
-            let layout = {
-                title: `Diagrama de Telaraña (r = ${r}, x0 = ${x0})`,
-                xaxis: { title: 'x_n', range: [0, 1], zeroline: false },
-                yaxis: { title: 'x_{n+1}', range: [0, 1], zeroline: false },
-                margin: { l: 60, r: 30, t: 40, b: 60 },
-                showlegend: true,
-                hovermode: 'closest'
+            let layoutCobweb = {
+                title: 'Diagrama de Telaraña (Proyección sobre \(x\))',
+                xaxis: { title: '\(x_n\)', range: axisRange, zeroline: true, zerolinecolor: '#ccc', constrain: 'domain' },
+                yaxis: { title: '\(x_{n+1}\)', range: axisRange, zeroline: true, zerolinecolor: '#ccc', scaleanchor: 'x', scaleratio: 1 },
+                margin: { l: 60, r: 30, t: 40, b: 50 }, showlegend: true
             };
-
-            Plotly.react('cobwebPlot', [traceCurve, traceDiag, traceCobweb], layout, {responsive: true});
+            Plotly.react('cobwebPlot', [traceDiag, traceMapPoints, traceCobweb], layoutCobweb, {responsive: true});
 
             if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise().catch(err => console.log(err.message));
         }
 
         // Iniciar
         window.onload = () => {
-            setTimeout(() => {
-                simulateOscillator();
-                simulateLogistic();
-            }, 500);
+            setTimeout(simulate, 500);
         };
     </script>
 </body>
