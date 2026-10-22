@@ -4,8 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visualizador: Mapa de Poincaré</title>
-    <!-- Importamos Plotly para los gráficos -->
+    
+    <!-- 1. Cargamos MathJax para renderizar el LaTeX -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Cargamos Plotly para los gráficos -->
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -60,22 +74,6 @@
             width: 100%;
             cursor: pointer;
         }
-        .btn {
-            width: 100%;
-            padding: 12px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.3s;
-            margin-top: 10px;
-        }
-        .btn:hover {
-            background-color: #2980b9;
-        }
         .info {
             margin-top: 20px;
             font-size: 14px;
@@ -114,8 +112,6 @@
                 <label><span>\(v_0\) (Vel. Inicial)</span> <span id="val-v0">0.00</span></label>
                 <input type="range" id="v0" min="-5.0" max="5.0" step="0.5" value="0.0">
             </div>
-            
-            <button class="btn" onclick="simulate()">Simular</button>
 
             <div class="info">
                 <strong>Para clase:</strong><br>
@@ -132,11 +128,25 @@
     </div>
 
     <script>
-        // Actualizar valores de los sliders visualmente
+        // --- 2. Lógica para actualizar los números de los sliders ---
         ['delta', 'w0', 'w', 'x0', 'v0'].forEach(id => {
             document.getElementById(id).addEventListener('input', function(e) {
                 document.getElementById('val-' + id).innerText = parseFloat(e.target.value).toFixed(2);
             });
+        });
+
+        // --- 3. Debounce: para que no sature la CPU al arrastrar rápido ---
+        let timeoutId = null;
+        function triggerSimulation() {
+            if (timeoutId) clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                simulate();
+            }, 50); // 50 ms de espera
+        }
+
+        // Asignamos el evento a todos los sliders para que actualicen en vivo
+        ['delta', 'w0', 'w', 'x0', 'v0'].forEach(id => {
+            document.getElementById(id).addEventListener('input', triggerSimulation);
         });
 
         function simulate() {
@@ -159,28 +169,22 @@
             let time_t = [], time_x = [];
             let poincare_x = [], poincare_v = [], poincare_t = [];
 
-            let next_poincare_t = 0; // Para extraer los puntos de Poincaré
+            let next_poincare_t = 0;
             
-            // Ecuaciones diferenciales
             function deriv(t, x, v) {
                 return [v, -w0*w0*x - delta*v + Math.cos(w*t)];
             }
 
             // Loop de integración (RK4)
             for (let i = 0; i <= steps; i++) {
-                // Guardar datos continuos
                 phase_x.push(x); phase_v.push(v);
                 time_t.push(t); time_x.push(x);
 
-                // Guardar si es tiempo de Poincaré (con un pequeño margen de error)
                 if (t >= next_poincare_t - 1e-5) {
-                    poincare_x.push(x);
-                    poincare_v.push(v);
-                    poincare_t.push(t);
+                    poincare_x.push(x); poincare_v.push(v); poincare_t.push(t);
                     next_poincare_t += T;
                 }
 
-                // Paso Runge-Kutta 4
                 let k1 = deriv(t, x, v);
                 let k2 = deriv(t + dt/2, x + k1[0]*dt/2, v + k1[1]*dt/2);
                 let k3 = deriv(t + dt/2, x + k2[0]*dt/2, v + k2[1]*dt/2);
@@ -191,14 +195,14 @@
                 t += dt;
             }
 
-            // 3. Calcular el Punto Fijo Teórico
+            // 3. Punto Fijo Teórico
             let den = Math.pow(w0*w0 - w*w, 2) + Math.pow(delta * w, 2);
             let A = (w0*w0 - w*w) / den;
             let B = (delta * w) / den;
             let fixed_x = A;
             let fixed_v = B * w;
 
-            // 4. Graficar con Plotly
+            // 4. Graficar con Plotly (usando react para actualizaciones rápidas)
             
             // Trazas del Espacio de Fases
             let tracePhaseLine = {
@@ -223,7 +227,9 @@
                 hovermode: 'closest',
                 showlegend: true
             };
-            Plotly.newPlot('phasePlot', [tracePhaseLine, tracePoincare, traceFixed], layoutPhase, {responsive: true});
+            
+            // Usamos Plotly.react para actualizar los datos eficientemente
+            Plotly.react('phasePlot', [tracePhaseLine, tracePoincare, traceFixed], layoutPhase, {responsive: true});
 
             // Trazas de Serie Temporal
             let traceTimeLine = {
@@ -246,11 +252,19 @@
                 margin: { l: 60, r: 30, t: 40, b: 50 },
                 showlegend: true
             };
-            Plotly.newPlot('timePlot', [traceTimeLine, traceTimePoincare, traceTimeFixed], layoutTime, {responsive: true});
+            Plotly.react('timePlot', [traceTimeLine, traceTimePoincare, traceTimeFixed], layoutTime, {responsive: true});
+
+            // 5. Forzar a MathJax a procesar el LaTeX dentro de los títulos de Plotly
+            if (window.MathJax && MathJax.typesetPromise) {
+                MathJax.typesetPromise().catch(err => console.log(err.message));
+            }
         }
 
-        // Iniciar simulación al cargar la página
-        window.onload = simulate;
+        // Iniciar al cargar la página (esperando a que MathJax esté listo)
+        window.onload = () => {
+            // Le damos un pequeño delay para asegurar que MathJax cargó
+            setTimeout(simulate, 500);
+        };
     </script>
 </body>
 </html>
