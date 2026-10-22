@@ -3,15 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualizador: Mapa de Poincaré</title>
+    <title>Visualizadores de Dinámica No Lineal</title>
     
     <!-- MathJax para el LaTeX -->
     <script>
         window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']]
-            },
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
             svg: { fontCache: 'global' }
         };
     </script>
@@ -25,27 +22,27 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #f5f7fa;
-            color: #333;
+            /* Fondo oscuro para que los gráficos blancos resalten */
+            background-color: #1e2229; 
+            color: #ecf0f1;
         }
-        h1 {
-            text-align: center;
-            color: #2c3e50;
-        }
+        h1, h2 { text-align: center; color: #ecf0f1; }
+        h2 { margin-top: 40px; border-bottom: 1px solid #34495e; padding-bottom: 10px; }
+        
         .container {
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
             max-width: 1400px;
-            margin: 0 auto;
+            margin: 0 auto 50px auto;
         }
         .controls {
             flex: 1;
             min-width: 320px;
-            background: white;
+            background: #2c3e50;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
         .plots {
             flex: 3;
@@ -57,160 +54,192 @@
         .plot-box {
             background: white;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
             height: 400px;
         }
-        .control-group {
-            margin-bottom: 15px;
-        }
+        .control-group { margin-bottom: 15px; }
         label {
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-weight: bold;
             margin-bottom: 5px;
-            color: #34495e;
+            color: #bdc3c7;
         }
-        input[type=range] {
-            width: 100%;
-            cursor: pointer;
-        }
-        /* Estilo para los inputs numéricos */
+        input[type=range] { width: 100%; cursor: pointer; }
         input[type=number] {
             width: 70px;
             padding: 4px 8px;
-            border: 1px solid #ccc;
+            border: 1px solid #34495e;
             border-radius: 4px;
             text-align: right;
-            font-weight: normal;
             font-family: monospace;
             font-size: 14px;
-            color: #2c3e50;
-            background-color: #f9fbfc;
+            color: #ecf0f1;
+            background-color: #1a252f;
         }
-        input[type=number]:focus {
-            outline: none;
-            border-color: #3498db;
-            background-color: #fff;
-        }
-        /* Ocultar flechitas del input para que se vea más limpio */
+        input[type=number]:focus { outline: none; border-color: #3498db; }
         input[type=number]::-webkit-inner-spin-button,
-        input[type=number]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        
         .info {
             margin-top: 20px;
             font-size: 14px;
-            color: #7f8c8d;
-            background: #ecf0f1;
+            color: #95a5a6;
+            background: #1a252f;
             padding: 15px;
             border-radius: 8px;
             line-height: 1.5;
         }
+        /* Botón para cambiar de vista */
+        .btn-toggle {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-bottom: 20px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .btn-toggle:hover { background-color: #2980b9; }
+        
+        /* Clase para ocultar secciones */
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <h1>Visualizador del Mapa de Poincaré</h1>
-    <p style="text-align: center;">Oscilador armónico forzado y amortiguado: \(\ddot{x} + \delta\dot{x} + \omega_0^2 x = \cos(\omega t)\)</p>
+    <!-- BOTONES DE NAVEGACIÓN -->
+    <div style="text-align: center; margin-bottom: 30px;">
+        <button class="btn-toggle" onclick="switchView('oscillator')">🔵 Oscilador Forzado (Poincaré)</button>
+        <button class="btn-toggle" onclick="switchView('logistic')">🟢 Mapa Logístico (Telaraña)</button>
+    </div>
 
-    <div class="container">
-        <!-- Panel de Controles -->
-        <div class="controls">
-            <div class="control-group">
-                <label>
-                    <span>\(\delta\) (Disipación)</span>
-                    <input type="number" id="num-delta" min="0.001" max="1.0" step="0.001" value="0.200">
-                </label>
-                <input type="range" id="delta" min="0.001" max="1.0" step="0.001" value="0.200">
-            </div>
-            
-            <div class="control-group">
-                <label>
-                    <span>\(\omega_0\) (Frec. Natural)</span>
-                    <input type="number" id="num-w0" min="0.500" max="2.000" step="0.001" value="1.000">
-                </label>
-                <input type="range" id="w0" min="0.500" max="2.000" step="0.001" value="1.000">
-            </div>
-            
-            <div class="control-group">
-                <label>
-                    <span>\(\omega\) (Frec. Forzada)</span>
-                    <input type="number" id="num-w" min="0.100" max="2.500" step="0.001" value="1.000">
-                </label>
-                <input type="range" id="w" min="0.100" max="2.500" step="0.001" value="1.000">
-            </div>
-            
-            <div class="control-group">
-                <label>
-                    <span>\(x_0\) (Pos. Inicial)</span>
-                    <input type="number" id="num-x0" min="-5.0" max="5.0" step="0.1" value="3.0">
-                </label>
-                <input type="range" id="x0" min="-5.0" max="5.0" step="0.1" value="3.0">
-            </div>
-            
-            <div class="control-group">
-                <label>
-                    <span>\(v_0\) (Vel. Inicial)</span>
-                    <input type="number" id="num-v0" min="-5.0" max="5.0" step="0.1" value="0.0">
-                </label>
-                <input type="range" id="v0" min="-5.0" max="5.0" step="0.1" value="0.0">
+    <!-- ========================================== -->
+    <!-- VISTA 1: OSCILADOR FORZADO Y POINCARÉ      -->
+    <!-- ========================================== -->
+    <div id="view-oscillator">
+        <h1>Visualizador del Mapa de Poincaré</h1>
+        <p style="text-align: center; color: #bdc3c7;">Oscilador armónico forzado y amortiguado: \(\ddot{x} + \delta\dot{x} + \omega_0^2 x = \cos(\omega t)\)</p>
+
+        <div class="container">
+            <div class="controls">
+                <div class="control-group">
+                    <label><span>\(\delta\) (Disipación)</span> <input type="number" id="num-delta" min="0.001" max="1.0" step="0.001" value="0.200"></label>
+                    <input type="range" id="delta" min="0.001" max="1.0" step="0.001" value="0.200">
+                </div>
+                <div class="control-group">
+                    <label><span>\(\omega_0\) (Frec. Natural)</span> <input type="number" id="num-w0" min="0.500" max="2.000" step="0.001" value="1.000"></label>
+                    <input type="range" id="w0" min="0.500" max="2.000" step="0.001" value="1.000">
+                </div>
+                <div class="control-group">
+                    <label><span>\(\omega\) (Frec. Forzada)</span> <input type="number" id="num-w" min="0.100" max="2.500" step="0.001" value="1.000"></label>
+                    <input type="range" id="w" min="0.100" max="2.500" step="0.001" value="1.000">
+                </div>
+                <div class="control-group">
+                    <label><span>\(x_0\) (Pos. Inicial)</span> <input type="number" id="num-x0" min="-5.0" max="5.0" step="0.1" value="3.0"></label>
+                    <input type="range" id="x0" min="-5.0" max="5.0" step="0.1" value="3.0">
+                </div>
+                <div class="control-group">
+                    <label><span>\(v_0\) (Vel. Inicial)</span> <input type="number" id="num-v0" min="-5.0" max="5.0" step="0.1" value="0.0"></label>
+                    <input type="range" id="v0" min="-5.0" max="5.0" step="0.1" value="0.0">
+                </div>
+                <div class="info">
+                    <strong>Para clase:</strong><br>
+                    1. Mové las condiciones iniciales. Los puntos rojos (Mapa de Poincaré) siempre caen en la estrella verde (Punto Fijo).<br><br>
+                    2. Probá resonancia: Poné \(\delta = 0.500\), \(\omega_0 = 1.000\), y \(\omega = 0.968\). Los puntos rojos dejarán de girar en espiral y caerán en línea recta.
+                </div>
             </div>
 
-            <div class="info">
-                <strong>Para clase:</strong><br>
-                1. Mové las condiciones iniciales. Los puntos rojos (Mapa de Poincaré) siempre caen en la estrella verde (Punto Fijo).<br><br>
-                2. Probá resonancia: Poné \(\delta = 0.500\), \(\omega_0 = 1.000\), y \(\omega = 0.968\). Los puntos rojos dejarán de girar en espiral y caerán en línea recta (¡podés escribirlo a mano para más precisión!).
+            <div class="plots">
+                <div id="phasePlot" class="plot-box"></div>
+                <div id="timePlot" class="plot-box"></div>
             </div>
         </div>
+    </div>
 
-        <!-- Panel de Gráficos -->
-        <div class="plots">
-            <div id="phasePlot" class="plot-box"></div>
-            <div id="timePlot" class="plot-box"></div>
+    <!-- ========================================== -->
+    <!-- VISTA 2: MAPA LOGÍSTICO Y TELARAÑA         -->
+    <!-- ========================================== -->
+    <div id="view-logistic" class="hidden">
+        <h1>Visualizador del Mapa Logístico (Diagrama de Telaraña)</h1>
+        <p style="text-align: center; color: #bdc3c7;">Ecuación en diferencias: \(x_{n+1} = r x_n (1 - x_n)\)</p>
+
+        <div class="container">
+            <div class="controls">
+                <div class="control-group">
+                    <label><span>\(r\) (Tasa de crecimiento)</span> <input type="number" id="num-r" min="0.1" max="4.0" step="0.01" value="2.8"></label>
+                    <input type="range" id="r" min="0.1" max="4.0" step="0.01" value="2.8">
+                </div>
+                <div class="control-group">
+                    <label><span>\(x_0\) (Condición inicial)</span> <input type="number" id="num-x0-log" min="0.01" max="0.99" step="0.01" value="0.2"></label>
+                    <input type="range" id="x0-log" min="0.01" max="0.99" step="0.01" value="0.2">
+                </div>
+                <div class="control-group">
+                    <label><span>Iteraciones</span> <input type="number" id="num-iter" min="1" max="100" step="1" value="30"></label>
+                    <input type="range" id="iter" min="1" max="100" step="1" value="30">
+                </div>
+                <div class="info">
+                    <strong>Para clase:</strong><br>
+                    1. Observá cómo el "telaraña" (líneas que van y vienen) converge al punto de intersección entre la parábola y la diagonal. Ese es el punto fijo.<br><br>
+                    2. Cambiá \(r\) a \(3.2\) para ver un ciclo de período 2, o a \(3.9\) para ver el comportamiento caótico.
+                </div>
+            </div>
+
+            <div class="plots">
+                <div id="cobwebPlot" class="plot-box" style="height: 600px;"></div>
+            </div>
         </div>
     </div>
 
     <script>
-        // --- Lógica de Sincronización y Actualización ---
-        let timeoutId = null;
-        function triggerSimulation() {
-            if (timeoutId) clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => {
-                simulate();
-            }, 50); 
+        // ==========================================
+        // LÓGICA GENERAL DE INTERFAZ Y DEBOUNCE
+        // ==========================================
+        function switchView(viewName) {
+            document.getElementById('view-oscillator').classList.add('hidden');
+            document.getElementById('view-logistic').classList.add('hidden');
+            document.getElementById('view-' + viewName).classList.remove('hidden');
+            
+            // Redibujar al cambiar de pestaña para evitar problemas de tamaño
+            if (viewName === 'oscillator') simulateOscillator();
+            if (viewName === 'logistic') simulateLogistic();
         }
 
-        const params = ['delta', 'w0', 'w', 'x0', 'v0'];
+        let timeoutId = null;
+        function triggerOscillator() {
+            if (timeoutId) clearTimeout(timeoutId);
+            timeoutId = setTimeout(simulateOscillator, 50);
+        }
+        let timeoutLogisticId = null;
+        function triggerLogistic() {
+            if (timeoutLogisticId) clearTimeout(timeoutLogisticId);
+            timeoutLogisticId = setTimeout(simulateLogistic, 50);
+        }
 
-        params.forEach(id => {
+        // Sincronización de inputs (Slider y Número)
+        function setupInputSync(id, callback) {
             const slider = document.getElementById(id);
             const numInput = document.getElementById('num-' + id);
-
-            // 1. Si muevo el slider, actualizo el número
+            
             slider.addEventListener('input', function(e) {
                 numInput.value = parseFloat(e.target.value).toFixed(3);
-                triggerSimulation();
+                if (callback) callback();
             });
-
-            // 2. Si escribo en el número, actualizo el slider
             numInput.addEventListener('input', function(e) {
                 let val = parseFloat(e.target.value);
-                // Validar que el valor esté dentro de los límites del slider
                 if (isNaN(val)) return;
-                
                 const min = parseFloat(slider.min);
                 const max = parseFloat(slider.max);
-                
                 if (val < min) val = min;
                 if (val > max) val = max;
-                
                 slider.value = val;
-                triggerSimulation();
+                if (callback) callback();
             });
-
-            // 3. Al salir del input (blur), formatear a 3 decimales
             numInput.addEventListener('change', function(e) {
                 let val = parseFloat(e.target.value);
                 const min = parseFloat(slider.min);
@@ -218,38 +247,37 @@
                 if (isNaN(val)) val = parseFloat(slider.value);
                 if (val < min) val = min;
                 if (val > max) val = max;
-                
                 numInput.value = val.toFixed(3);
                 slider.value = val;
-                triggerSimulation();
+                if (callback) callback();
             });
-        });
+        }
 
-        function simulate() {
-            // 1. Obtener parámetros de los sliders
+        // ==========================================
+        // LÓGICA: VISUALIZADOR DEL OSCILADOR
+        // ==========================================
+        ['delta', 'w0', 'w', 'x0', 'v0'].forEach(id => setupInputSync(id, triggerOscillator));
+
+        function simulateOscillator() {
+            if (document.getElementById('view-oscillator').classList.contains('hidden')) return;
+
             const delta = parseFloat(document.getElementById('delta').value);
             const w0 = parseFloat(document.getElementById('w0').value);
             const w = parseFloat(document.getElementById('w').value);
             const x0 = parseFloat(document.getElementById('x0').value);
             const v0 = parseFloat(document.getElementById('v0').value);
 
-            // 2. Configurar simulación
             const T = (2 * Math.PI) / w;
             const t_max = 20 * T; 
             const dt = 0.02; 
             const steps = Math.floor(t_max / dt);
 
             let x = x0, v = v0, t = 0;
-            
-            let phase_x = [], phase_v = [];
-            let time_t = [], time_x = [];
+            let phase_x = [], phase_v = [], time_t = [], time_x = [];
             let poincare_x = [], poincare_v = [], poincare_t = [];
-
             let next_poincare_t = 0;
             
-            function deriv(t, x, v) {
-                return [v, -w0*w0*x - delta*v + Math.cos(w*t)];
-            }
+            function deriv(t, x, v) { return [v, -w0*w0*x - delta*v + Math.cos(w*t)]; }
 
             for (let i = 0; i <= steps; i++) {
                 phase_x.push(x); phase_v.push(v);
@@ -270,70 +298,119 @@
                 t += dt;
             }
 
-            // 3. Punto Fijo Teórico
             let den = Math.pow(w0*w0 - w*w, 2) + Math.pow(delta * w, 2);
             let A = (w0*w0 - w*w) / den;
             let B = (delta * w) / den;
-            let fixed_x = A;
-            let fixed_v = B * w;
 
-            // 4. Graficar (Plotly.react para máxima fluidez)
-            let tracePhaseLine = {
-                x: phase_x, y: phase_v, mode: 'lines',
-                name: 'Trayectoria continua', line: {color: 'rgba(52, 152, 219, 0.4)', width: 1.5}
-            };
-            let tracePoincare = {
-                x: poincare_x, y: poincare_v, mode: 'markers+lines',
-                name: 'Mapa de Poincaré', line: {color: 'rgba(231, 76, 60, 0.5)', width: 1, dash: 'dot'},
-                marker: {color: '#e74c3c', size: 8, symbol: 'circle'}
-            };
-            let traceFixed = {
-                x: [fixed_x], y: [fixed_v], mode: 'markers',
-                name: 'Punto Fijo (A, Bω)', marker: {color: '#2ecc71', size: 15, symbol: 'star'}
-            };
+            // Gráfico de Fases
+            let tracePhaseLine = { x: phase_x, y: phase_v, mode: 'lines', name: 'Trayectoria continua', line: {color: 'rgba(52, 152, 219, 0.4)', width: 1.5} };
+            let tracePoincare = { x: poincare_x, y: poincare_v, mode: 'markers+lines', name: 'Mapa de Poincaré', line: {color: 'rgba(231, 76, 60, 0.5)', width: 1, dash: 'dot'}, marker: {color: '#e74c3c', size: 8} };
+            let traceFixed = { x: [A], y: [B * w], mode: 'markers', name: 'Punto Fijo', marker: {color: '#2ecc71', size: 15, symbol: 'star'} };
 
             let layoutPhase = {
-                title: 'Espacio de Fases (Mapa de Poincaré en rojo)',
+                title: 'Espacio de Fases',
                 xaxis: { title: 'Posición \(x\)', zeroline: true, zerolinecolor: '#ccc' },
                 yaxis: { title: 'Velocidad \(v\)', zeroline: true, zerolinecolor: '#ccc' },
-                margin: { l: 60, r: 30, t: 40, b: 50 },
-                hovermode: 'closest',
-                showlegend: true
+                margin: { l: 60, r: 30, t: 40, b: 50 }, hovermode: 'closest', showlegend: true
             };
-            
             Plotly.react('phasePlot', [tracePhaseLine, tracePoincare, traceFixed], layoutPhase, {responsive: true});
 
-            let traceTimeLine = {
-                x: time_t, y: time_x, mode: 'lines',
-                name: 'x(t)', line: {color: 'rgba(52, 152, 219, 0.4)'}
-            };
-            let traceTimePoincare = {
-                x: poincare_t, y: poincare_x, mode: 'markers',
-                name: 'Destellos', marker: {color: '#e74c3c', size: 8}
-            };
-            let traceTimeFixed = {
-                x: [0, t_max], y: [fixed_x, fixed_x], mode: 'lines',
-                name: 'Amplitud Estacionaria', line: {color: '#2ecc71', width: 2, dash: 'dash'}
-            };
+            // Gráfico Temporal con Líneas Verticales Naranjas
+            let traceTimeLine = { x: time_t, y: time_x, mode: 'lines', name: 'x(t)', line: {color: 'rgba(52, 152, 219, 0.8)', width: 2} };
+            let traceTimePoincare = { x: poincare_t, y: poincare_x, mode: 'markers', name: 'Destellos', marker: {color: '#e74c3c', size: 8} };
+            
+            // Líneas verticales suaves (Naranja clarito)
+            let shapes = [];
+            for (let i = 0; i < poincare_t.length; i++) {
+                shapes.push({
+                    type: 'line',
+                    x0: poincare_t[i], y0: Math.min(...time_x),
+                    x1: poincare_t[i], y1: Math.max(...time_x),
+                    line: { color: 'rgba(255, 165, 0, 0.3)', width: 1, dash: 'solid' } // Naranja suave
+                });
+            }
 
             let layoutTime = {
                 title: 'Evolución Temporal \(x(t)\)',
                 xaxis: { title: 'Tiempo \(t\)' },
                 yaxis: { title: 'Posición \(x\)', zeroline: true, zerolinecolor: '#ccc' },
-                margin: { l: 60, r: 30, t: 40, b: 50 },
-                showlegend: true
+                margin: { l: 60, r: 30, t: 40, b: 50 }, showlegend: true,
+                shapes: shapes // Agregamos las líneas verticales
             };
-            Plotly.react('timePlot', [traceTimeLine, traceTimePoincare, traceTimeFixed], layoutTime, {responsive: true});
+            Plotly.react('timePlot', [traceTimeLine, traceTimePoincare], layoutTime, {responsive: true});
 
-            // 5. Renderizar LaTeX
-            if (window.MathJax && MathJax.typesetPromise) {
-                MathJax.typesetPromise().catch(err => console.log(err.message));
-            }
+            if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise().catch(err => console.log(err.message));
         }
 
-        // Iniciar 
+        // ==========================================
+        // LÓGICA: VISUALIZADOR DEL MAPA LOGÍSTICO
+        // ==========================================
+        ['r', 'x0-log', 'iter'].forEach(id => setupInputSync(id, triggerLogistic));
+
+        function simulateLogistic() {
+            if (document.getElementById('view-logistic').classList.contains('hidden')) return;
+
+            const r = parseFloat(document.getElementById('r').value);
+            const x0 = parseFloat(document.getElementById('x0-log').value);
+            const n_iter = parseInt(document.getElementById('iter').value);
+
+            // 1. Generar la curva de la parábola f(x) = r * x * (1 - x)
+            let curveX = [], curveY = [];
+            for (let i = 0; i <= 100; i++) {
+                let x_val = i / 100;
+                curveX.push(x_val);
+                curveY.push(r * x_val * (1 - x_val));
+            }
+
+            // 2. Generar la diagonal y = x
+            let diagX = [0, 1];
+            let diagY = [0, 1];
+
+            // 3. Generar la trayectoria de la telaraña (Cobweb)
+            let cobwebX = [x0];
+            let cobwebY = [0]; // Empezamos desde el eje x
+            
+            let current_x = x0;
+            for (let i = 0; i < n_iter; i++) {
+                let next_x = r * current_x * (1 - current_x);
+                // Línea vertical: de (x, x) a (x, f(x))
+                cobwebX.push(current_x); cobwebY.push(next_x);
+                // Línea horizontal: de (x, f(x)) a (f(x), f(x))
+                cobwebX.push(next_x); cobwebY.push(next_x);
+                current_x = next_x;
+            }
+
+            // Trazas de Plotly
+            let traceCurve = { x: curveX, y: curveY, mode: 'lines', name: 'f(x) = r x (1-x)', line: {color: '#3498db', width: 2} };
+            let traceDiag = { x: diagX, y: diagY, mode: 'lines', name: 'y = x', line: {color: '#7f8c8d', width: 1, dash: 'dash'} };
+            
+            // La telaraña
+            let traceCobweb = { 
+                x: cobwebX, y: cobwebY, mode: 'lines+markers', name: 'Telaraña', 
+                line: {color: '#e74c3c', width: 1.5}, 
+                marker: {color: '#e74c3c', size: 4} 
+            };
+
+            let layout = {
+                title: `Diagrama de Telaraña (r = ${r}, x0 = ${x0})`,
+                xaxis: { title: 'x_n', range: [0, 1], zeroline: false },
+                yaxis: { title: 'x_{n+1}', range: [0, 1], zeroline: false },
+                margin: { l: 60, r: 30, t: 40, b: 60 },
+                showlegend: true,
+                hovermode: 'closest'
+            };
+
+            Plotly.react('cobwebPlot', [traceCurve, traceDiag, traceCobweb], layout, {responsive: true});
+
+            if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise().catch(err => console.log(err.message));
+        }
+
+        // Iniciar
         window.onload = () => {
-            setTimeout(simulate, 500);
+            setTimeout(() => {
+                simulateOscillator();
+                simulateLogistic();
+            }, 500);
         };
     </script>
 </body>
