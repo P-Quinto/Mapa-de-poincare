@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visualizador: Mapa de Poincaré</title>
     
-    <!-- 1. Cargamos MathJax para renderizar el LaTeX -->
+    <!-- MathJax para el LaTeX -->
     <script>
         window.MathJax = {
             tex: {
@@ -17,7 +17,7 @@
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
-    <!-- Cargamos Plotly para los gráficos -->
+    <!-- Plotly -->
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     
     <style>
@@ -41,7 +41,7 @@
         }
         .controls {
             flex: 1;
-            min-width: 300px;
+            min-width: 320px;
             background: white;
             padding: 20px;
             border-radius: 10px;
@@ -66,6 +66,7 @@
         label {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             font-weight: bold;
             margin-bottom: 5px;
             color: #34495e;
@@ -74,6 +75,30 @@
             width: 100%;
             cursor: pointer;
         }
+        /* Estilo para los inputs numéricos */
+        input[type=number] {
+            width: 70px;
+            padding: 4px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: right;
+            font-weight: normal;
+            font-family: monospace;
+            font-size: 14px;
+            color: #2c3e50;
+            background-color: #f9fbfc;
+        }
+        input[type=number]:focus {
+            outline: none;
+            border-color: #3498db;
+            background-color: #fff;
+        }
+        /* Ocultar flechitas del input para que se vea más limpio */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
         .info {
             margin-top: 20px;
             font-size: 14px;
@@ -81,6 +106,7 @@
             background: #ecf0f1;
             padding: 15px;
             border-radius: 8px;
+            line-height: 1.5;
         }
     </style>
 </head>
@@ -93,30 +119,49 @@
         <!-- Panel de Controles -->
         <div class="controls">
             <div class="control-group">
-                <label><span>\(\delta\) (Disipación)</span> <span id="val-delta">0.20</span></label>
-                <input type="range" id="delta" min="0.01" max="1.0" step="0.01" value="0.2">
+                <label>
+                    <span>\(\delta\) (Disipación)</span>
+                    <input type="number" id="num-delta" min="0.001" max="1.0" step="0.001" value="0.200">
+                </label>
+                <input type="range" id="delta" min="0.001" max="1.0" step="0.001" value="0.200">
             </div>
+            
             <div class="control-group">
-                <label><span>\(\omega_0\) (Frec. Natural)</span> <span id="val-w0">1.00</span></label>
-                <input type="range" id="w0" min="0.5" max="2.0" step="0.05" value="1.0">
+                <label>
+                    <span>\(\omega_0\) (Frec. Natural)</span>
+                    <input type="number" id="num-w0" min="0.500" max="2.000" step="0.001" value="1.000">
+                </label>
+                <input type="range" id="w0" min="0.500" max="2.000" step="0.001" value="1.000">
             </div>
+            
             <div class="control-group">
-                <label><span>\(\omega\) (Frec. Forzada)</span> <span id="val-w">1.00</span></label>
-                <input type="range" id="w" min="0.1" max="2.5" step="0.05" value="1.0">
+                <label>
+                    <span>\(\omega\) (Frec. Forzada)</span>
+                    <input type="number" id="num-w" min="0.100" max="2.500" step="0.001" value="1.000">
+                </label>
+                <input type="range" id="w" min="0.100" max="2.500" step="0.001" value="1.000">
             </div>
+            
             <div class="control-group">
-                <label><span>\(x_0\) (Pos. Inicial)</span> <span id="val-x0">3.00</span></label>
-                <input type="range" id="x0" min="-5.0" max="5.0" step="0.5" value="3.0">
+                <label>
+                    <span>\(x_0\) (Pos. Inicial)</span>
+                    <input type="number" id="num-x0" min="-5.0" max="5.0" step="0.1" value="3.0">
+                </label>
+                <input type="range" id="x0" min="-5.0" max="5.0" step="0.1" value="3.0">
             </div>
+            
             <div class="control-group">
-                <label><span>\(v_0\) (Vel. Inicial)</span> <span id="val-v0">0.00</span></label>
-                <input type="range" id="v0" min="-5.0" max="5.0" step="0.5" value="0.0">
+                <label>
+                    <span>\(v_0\) (Vel. Inicial)</span>
+                    <input type="number" id="num-v0" min="-5.0" max="5.0" step="0.1" value="0.0">
+                </label>
+                <input type="range" id="v0" min="-5.0" max="5.0" step="0.1" value="0.0">
             </div>
 
             <div class="info">
                 <strong>Para clase:</strong><br>
                 1. Mové las condiciones iniciales. Los puntos rojos (Mapa de Poincaré) siempre caen en la estrella verde (Punto Fijo).<br><br>
-                2. Probá resonancia: Poné \(\delta = 0.5\), \(\omega_0 = 1\), y \(\omega \approx 0.97\). Los puntos rojos dejarán de girar en espiral y caerán en línea recta.
+                2. Probá resonancia: Poné \(\delta = 0.500\), \(\omega_0 = 1.000\), y \(\omega = 0.968\). Los puntos rojos dejarán de girar en espiral y caerán en línea recta (¡podés escribirlo a mano para más precisión!).
             </div>
         </div>
 
@@ -128,29 +173,60 @@
     </div>
 
     <script>
-        // --- 2. Lógica para actualizar los números de los sliders ---
-        ['delta', 'w0', 'w', 'x0', 'v0'].forEach(id => {
-            document.getElementById(id).addEventListener('input', function(e) {
-                document.getElementById('val-' + id).innerText = parseFloat(e.target.value).toFixed(2);
-            });
-        });
-
-        // --- 3. Debounce: para que no sature la CPU al arrastrar rápido ---
+        // --- Lógica de Sincronización y Actualización ---
         let timeoutId = null;
         function triggerSimulation() {
             if (timeoutId) clearTimeout(timeoutId);
             timeoutId = setTimeout(() => {
                 simulate();
-            }, 50); // 50 ms de espera
+            }, 50); 
         }
 
-        // Asignamos el evento a todos los sliders para que actualicen en vivo
-        ['delta', 'w0', 'w', 'x0', 'v0'].forEach(id => {
-            document.getElementById(id).addEventListener('input', triggerSimulation);
+        const params = ['delta', 'w0', 'w', 'x0', 'v0'];
+
+        params.forEach(id => {
+            const slider = document.getElementById(id);
+            const numInput = document.getElementById('num-' + id);
+
+            // 1. Si muevo el slider, actualizo el número
+            slider.addEventListener('input', function(e) {
+                numInput.value = parseFloat(e.target.value).toFixed(3);
+                triggerSimulation();
+            });
+
+            // 2. Si escribo en el número, actualizo el slider
+            numInput.addEventListener('input', function(e) {
+                let val = parseFloat(e.target.value);
+                // Validar que el valor esté dentro de los límites del slider
+                if (isNaN(val)) return;
+                
+                const min = parseFloat(slider.min);
+                const max = parseFloat(slider.max);
+                
+                if (val < min) val = min;
+                if (val > max) val = max;
+                
+                slider.value = val;
+                triggerSimulation();
+            });
+
+            // 3. Al salir del input (blur), formatear a 3 decimales
+            numInput.addEventListener('change', function(e) {
+                let val = parseFloat(e.target.value);
+                const min = parseFloat(slider.min);
+                const max = parseFloat(slider.max);
+                if (isNaN(val)) val = parseFloat(slider.value);
+                if (val < min) val = min;
+                if (val > max) val = max;
+                
+                numInput.value = val.toFixed(3);
+                slider.value = val;
+                triggerSimulation();
+            });
         });
 
         function simulate() {
-            // 1. Obtener parámetros
+            // 1. Obtener parámetros de los sliders
             const delta = parseFloat(document.getElementById('delta').value);
             const w0 = parseFloat(document.getElementById('w0').value);
             const w = parseFloat(document.getElementById('w').value);
@@ -159,8 +235,8 @@
 
             // 2. Configurar simulación
             const T = (2 * Math.PI) / w;
-            const t_max = 20 * T; // 20 períodos
-            const dt = 0.02; // Paso de integración
+            const t_max = 20 * T; 
+            const dt = 0.02; 
             const steps = Math.floor(t_max / dt);
 
             let x = x0, v = v0, t = 0;
@@ -175,7 +251,6 @@
                 return [v, -w0*w0*x - delta*v + Math.cos(w*t)];
             }
 
-            // Loop de integración (RK4)
             for (let i = 0; i <= steps; i++) {
                 phase_x.push(x); phase_v.push(v);
                 time_t.push(t); time_x.push(x);
@@ -202,9 +277,7 @@
             let fixed_x = A;
             let fixed_v = B * w;
 
-            // 4. Graficar con Plotly (usando react para actualizaciones rápidas)
-            
-            // Trazas del Espacio de Fases
+            // 4. Graficar (Plotly.react para máxima fluidez)
             let tracePhaseLine = {
                 x: phase_x, y: phase_v, mode: 'lines',
                 name: 'Trayectoria continua', line: {color: 'rgba(52, 152, 219, 0.4)', width: 1.5}
@@ -228,10 +301,8 @@
                 showlegend: true
             };
             
-            // Usamos Plotly.react para actualizar los datos eficientemente
             Plotly.react('phasePlot', [tracePhaseLine, tracePoincare, traceFixed], layoutPhase, {responsive: true});
 
-            // Trazas de Serie Temporal
             let traceTimeLine = {
                 x: time_t, y: time_x, mode: 'lines',
                 name: 'x(t)', line: {color: 'rgba(52, 152, 219, 0.4)'}
@@ -254,15 +325,14 @@
             };
             Plotly.react('timePlot', [traceTimeLine, traceTimePoincare, traceTimeFixed], layoutTime, {responsive: true});
 
-            // 5. Forzar a MathJax a procesar el LaTeX dentro de los títulos de Plotly
+            // 5. Renderizar LaTeX
             if (window.MathJax && MathJax.typesetPromise) {
                 MathJax.typesetPromise().catch(err => console.log(err.message));
             }
         }
 
-        // Iniciar al cargar la página (esperando a que MathJax esté listo)
+        // Iniciar 
         window.onload = () => {
-            // Le damos un pequeño delay para asegurar que MathJax cargó
             setTimeout(simulate, 500);
         };
     </script>
