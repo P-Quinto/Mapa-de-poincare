@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador: Mapa de Poincaré</title>
+    <!-- Importamos Plotly para los gráficos -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .controls {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .plots {
+            flex: 3;
+            min-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .plot-box {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            height: 400px;
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #34495e;
+        }
+        input[type=range] {
+            width: 100%;
+            cursor: pointer;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .info {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #7f8c8d;
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Visualizador del Mapa de Poincaré</h1>
+    <p style="text-align: center;">Oscilador armónico forzado y amortiguado: \(\ddot{x} + \delta\dot{x} + \omega_0^2 x = \cos(\omega t)\)</p>
+
+    <div class="container">
+        <!-- Panel de Controles -->
+        <div class="controls">
+            <div class="control-group">
+                <label><span>\(\delta\) (Disipación)</span> <span id="val-delta">0.20</span></label>
+                <input type="range" id="delta" min="0.01" max="1.0" step="0.01" value="0.2">
+            </div>
+            <div class="control-group">
+                <label><span>\(\omega_0\) (Frec. Natural)</span> <span id="val-w0">1.00</span></label>
+                <input type="range" id="w0" min="0.5" max="2.0" step="0.05" value="1.0">
+            </div>
+            <div class="control-group">
+                <label><span>\(\omega\) (Frec. Forzada)</span> <span id="val-w">1.00</span></label>
+                <input type="range" id="w" min="0.1" max="2.5" step="0.05" value="1.0">
+            </div>
+            <div class="control-group">
+                <label><span>\(x_0\) (Pos. Inicial)</span> <span id="val-x0">3.00</span></label>
+                <input type="range" id="x0" min="-5.0" max="5.0" step="0.5" value="3.0">
+            </div>
+            <div class="control-group">
+                <label><span>\(v_0\) (Vel. Inicial)</span> <span id="val-v0">0.00</span></label>
+                <input type="range" id="v0" min="-5.0" max="5.0" step="0.5" value="0.0">
+            </div>
+            
+            <button class="btn" onclick="simulate()">Simular</button>
+
+            <div class="info">
+                <strong>Para clase:</strong><br>
+                1. Mové las condiciones iniciales. Los puntos rojos (Mapa de Poincaré) siempre caen en la estrella verde (Punto Fijo).<br><br>
+                2. Probá resonancia: Poné \(\delta = 0.5\), \(\omega_0 = 1\), y \(\omega \approx 0.97\). Los puntos rojos dejarán de girar en espiral y caerán en línea recta.
+            </div>
+        </div>
+
+        <!-- Panel de Gráficos -->
+        <div class="plots">
+            <div id="phasePlot" class="plot-box"></div>
+            <div id="timePlot" class="plot-box"></div>
+        </div>
+    </div>
+
+    <script>
+        // Actualizar valores de los sliders visualmente
+        ['delta', 'w0', 'w', 'x0', 'v0'].forEach(id => {
+            document.getElementById(id).addEventListener('input', function(e) {
+                document.getElementById('val-' + id).innerText = parseFloat(e.target.value).toFixed(2);
+            });
+        });
+
+        function simulate() {
+            // 1. Obtener parámetros
+            const delta = parseFloat(document.getElementById('delta').value);
+            const w0 = parseFloat(document.getElementById('w0').value);
+            const w = parseFloat(document.getElementById('w').value);
+            const x0 = parseFloat(document.getElementById('x0').value);
+            const v0 = parseFloat(document.getElementById('v0').value);
+
+            // 2. Configurar simulación
+            const T = (2 * Math.PI) / w;
+            const t_max = 20 * T; // 20 períodos
+            const dt = 0.02; // Paso de integración
+            const steps = Math.floor(t_max / dt);
+
+            let x = x0, v = v0, t = 0;
+            
+            let phase_x = [], phase_v = [];
+            let time_t = [], time_x = [];
+            let poincare_x = [], poincare_v = [], poincare_t = [];
+
+            let next_poincare_t = 0; // Para extraer los puntos de Poincaré
+            
+            // Ecuaciones diferenciales
+            function deriv(t, x, v) {
+                return [v, -w0*w0*x - delta*v + Math.cos(w*t)];
+            }
+
+            // Loop de integración (RK4)
+            for (let i = 0; i <= steps; i++) {
+                // Guardar datos continuos
+                phase_x.push(x); phase_v.push(v);
+                time_t.push(t); time_x.push(x);
+
+                // Guardar si es tiempo de Poincaré (con un pequeño margen de error)
+                if (t >= next_poincare_t - 1e-5) {
+                    poincare_x.push(x);
+                    poincare_v.push(v);
+                    poincare_t.push(t);
+                    next_poincare_t += T;
+                }
+
+                // Paso Runge-Kutta 4
+                let k1 = deriv(t, x, v);
+                let k2 = deriv(t + dt/2, x + k1[0]*dt/2, v + k1[1]*dt/2);
+                let k3 = deriv(t + dt/2, x + k2[0]*dt/2, v + k2[1]*dt/2);
+                let k4 = deriv(t + dt, x + k3[0]*dt, v + k3[1]*dt);
+
+                x += (dt/6) * (k1[0] + 2*k2[0] + 2*k3[0] + k4[0]);
+                v += (dt/6) * (k1[1] + 2*k2[1] + 2*k3[1] + k4[1]);
+                t += dt;
+            }
+
+            // 3. Calcular el Punto Fijo Teórico
+            let den = Math.pow(w0*w0 - w*w, 2) + Math.pow(delta * w, 2);
+            let A = (w0*w0 - w*w) / den;
+            let B = (delta * w) / den;
+            let fixed_x = A;
+            let fixed_v = B * w;
+
+            // 4. Graficar con Plotly
+            
+            // Trazas del Espacio de Fases
+            let tracePhaseLine = {
+                x: phase_x, y: phase_v, mode: 'lines',
+                name: 'Trayectoria continua', line: {color: 'rgba(52, 152, 219, 0.4)', width: 1.5}
+            };
+            let tracePoincare = {
+                x: poincare_x, y: poincare_v, mode: 'markers+lines',
+                name: 'Mapa de Poincaré', line: {color: 'rgba(231, 76, 60, 0.5)', width: 1, dash: 'dot'},
+                marker: {color: '#e74c3c', size: 8, symbol: 'circle'}
+            };
+            let traceFixed = {
+                x: [fixed_x], y: [fixed_v], mode: 'markers',
+                name: 'Punto Fijo (A, Bω)', marker: {color: '#2ecc71', size: 15, symbol: 'star'}
+            };
+
+            let layoutPhase = {
+                title: 'Espacio de Fases (Mapa de Poincaré en rojo)',
+                xaxis: { title: 'Posición \(x\)', zeroline: true, zerolinecolor: '#ccc' },
+                yaxis: { title: 'Velocidad \(v\)', zeroline: true, zerolinecolor: '#ccc' },
+                margin: { l: 60, r: 30, t: 40, b: 50 },
+                hovermode: 'closest',
+                showlegend: true
+            };
+            Plotly.newPlot('phasePlot', [tracePhaseLine, tracePoincare, traceFixed], layoutPhase, {responsive: true});
+
+            // Trazas de Serie Temporal
+            let traceTimeLine = {
+                x: time_t, y: time_x, mode: 'lines',
+                name: 'x(t)', line: {color: 'rgba(52, 152, 219, 0.4)'}
+            };
+            let traceTimePoincare = {
+                x: poincare_t, y: poincare_x, mode: 'markers',
+                name: 'Destellos', marker: {color: '#e74c3c', size: 8}
+            };
+            let traceTimeFixed = {
+                x: [0, t_max], y: [fixed_x, fixed_x], mode: 'lines',
+                name: 'Amplitud Estacionaria', line: {color: '#2ecc71', width: 2, dash: 'dash'}
+            };
+
+            let layoutTime = {
+                title: 'Evolución Temporal \(x(t)\)',
+                xaxis: { title: 'Tiempo \(t\)' },
+                yaxis: { title: 'Posición \(x\)', zeroline: true, zerolinecolor: '#ccc' },
+                margin: { l: 60, r: 30, t: 40, b: 50 },
+                showlegend: true
+            };
+            Plotly.newPlot('timePlot', [traceTimeLine, traceTimePoincare, traceTimeFixed], layoutTime, {responsive: true});
+        }
+
+        // Iniciar simulación al cargar la página
+        window.onload = simulate;
+    </script>
+</body>
+</html>
